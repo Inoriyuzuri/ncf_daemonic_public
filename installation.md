@@ -20,8 +20,8 @@
 
 ## 安装步骤
 
-1. 将 `ncf_encrypted.lua` 复制到 Daemonic 根目录
-2. 将 `rotations/` 文件夹整个复制到 Daemonic 根目录
+1. 将 `ncf_encrypted.lua` 复制到 Daemonic 启动 exe 所在的根目录
+2. 将 `rotations/` 文件夹整个复制到 Daemonic 启动 exe 所在的根目录
 3. 启动游戏，NCF 会自动加载
 
 最终目录结构：
@@ -50,7 +50,7 @@ Daemonic/
 ## 常见问题
 
 **Q: 没有自动加载？**
-- 确认 `ncf_encrypted.lua` 在 Daemonic 根目录下
+- 确认 `ncf_encrypted.lua` 在 Daemonic 启动 exe 所在的根目录下
 - 确认 Daemonic 已正常启动
 - 重新进入游戏或 `/reload`
 
