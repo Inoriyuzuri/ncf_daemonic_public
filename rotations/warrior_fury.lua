@@ -235,6 +235,7 @@ local SetEnemyCount = NCF.SetEnemyCount
 local GetUnitPower = NCF.GetUnitPower
 local GetDistanceToTarget = NCF.GetDistanceToTarget
 local GetUnitHealthPct = NCF.GetUnitHealthPct
+local GetTimeSinceCast = NCF.GetTimeSinceCast
 
 local function GetRage()
     return GetUnitPower("player", "rage")
@@ -442,7 +443,7 @@ local function CreateFuryRotation()
             end
             
             -- 17. 旋风斩 (填充)
-            if IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) then
+            if IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) and GetTimeSinceCast(SPELL.Whirlwind) > 2.5 then
                 return "spell", SPELL.Whirlwind
             end
         
@@ -569,7 +570,7 @@ local function CreateFuryRotation()
             end
             
             -- 19. 旋风斩 (填充)
-            if IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) then
+            if IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) and GetTimeSinceCast(SPELL.Whirlwind) > 2.5 then
                 return "spell", SPELL.Whirlwind
             end
         end
@@ -602,7 +603,7 @@ local function CreateFuryRotation()
             end
             
             -- 2. 旋风斩: 无旋风斩buff (触发/维持顺劈)
-            if not hasWhirlwind and IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) then
+            if not hasWhirlwind and IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) and GetTimeSinceCast(SPELL.Whirlwind) > 2.5 then
                 return "spell", SPELL.Whirlwind
             end
             
@@ -687,7 +688,7 @@ local function CreateFuryRotation()
             end
 			
             -- 14. 旋风斩 (填充)
-            if IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) then
+            if IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) and GetTimeSinceCast(SPELL.Whirlwind) > 2.5 then
                 return "spell", SPELL.Whirlwind
             end
         
@@ -803,7 +804,7 @@ local function CreateFuryRotation()
             end
             
             -- 18. 旋风斩 (填充)
-            if IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) then
+            if IsReady(SPELL.Whirlwind) and not ShouldSkipSpell(SPELL.Whirlwind) and GetTimeSinceCast(SPELL.Whirlwind) > 2.5 then
                 return "spell", SPELL.Whirlwind
             end
         end
