@@ -28,6 +28,7 @@
 
 ```
 Daemonic/
+├── daemonic.exe            # Daemonic 启动程序
 ├── ncf_encrypted.lua
 ├── rotations/
 │   ├── mage_arcane.lua
