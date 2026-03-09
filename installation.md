@@ -5,19 +5,6 @@
 - Daemonic 解锁器已安装并正常运行
 - 魔兽世界客户端
 
-## 文件结构
-
-下载后你会得到以下文件：
-
-```
-├── ncf_encrypted.lua       # 核心文件 (加密版)
-└── rotations/              # 循环文件夹
-    ├── mage_arcane.lua
-    ├── mage_frost.lua
-    ├── warrior_fury.lua
-    └── ...
-```
-
 ## 安装步骤
 
 1. 将 `ncf_encrypted.lua` 复制到 Daemonic 启动 exe 所在的根目录
