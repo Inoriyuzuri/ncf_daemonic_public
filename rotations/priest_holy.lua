@@ -9,48 +9,50 @@
 
 --- 战前 ---
 0.  真言术：韧 (21562): 没有buff时
-0.1 净化 (527): 友方魔法驱散
-
--- TODO: 0.2 心灵尖啸 (8122): 8码内敌人释放不可打断法术时使用
--- TODO: 0.3 天使之羽 (121536): 移动超过2秒时使用
--- TODO: 祝福 (Benediction): 愈合祷言跳转时有概率对目标施放恢复
+0.1 净化 (527): 友方魔法驱散 (自动/鼠标模式)
+0.3 天使之羽 (121536): 移动超过2秒且无buff时, 丢脚下
 
 --- 战斗门槛: 自己战斗中 或 队友战斗中 ---
 
 0.6 绝望祷言 (19236): 自身血量 < 25%
 
---- 核心循环 ---
-1.  命运扭转维持: 有天赋且无buff时，攻击 <35% 血量的敌人
-    1.1 暗言术：灭 (32379) — 瞬发
-    1.2 圣言术：罚 (88625) — 瞬发
-    1.3 神圣之火 (14914) — 炽热星火buff下瞬发
-    1.4 神圣之火 (14914) — 需要站桩
-    1.5 惩击 (585) — 需要站桩
-
-2.  愈合祷言 (33076): 优先坦克，层数管理 (每次施放7层，上限14层)
-
-2.5 守护之魂 (47788): 队友血量 < 20%
-
-3.  圣言术：静 (2050): 根据天赋/充能/缺血量智能施放
-
 --- 爆发: 神圣颂歌buff存在时 ---
     饰品/药水/种族技能
 
-4.  快速治疗 vs 治疗祈祷: 根据法强和团队缺血量智能选择
+--- 核心循环 ---
+1.  愈合祷言 (33076): 优先坦克, 层数管理 (美德祈祷: 7层/上限14, 否则5层/上限10)
 
-Buff ID:
-- 真言术韧: 21562
-- 命运扭转: 390978
-- 炽热星火: 372617
-- 神圣颂歌: 200183
-- 愈合祷言: 33076
-- 天使羽毛: 121557
+2.  守护之魂 (47788): 队友血量 < 20%
+
+3.  圣言术：静 (2050): 根据天赋/充能/缺血量智能施放
+    - 奇迹工匠: 2层充能, 防止溢出
+    - 终极宁静: 4+队友缺血时考虑AoE价值
+    - 神圣颂歌期间积极使用
+
+3.5 命运扭转维持: 有天赋且无buff时, 攻击 <35% 血量的敌人
+    暗言术：灭 (32379) → 圣言术：罚 (88625) → 神圣之火 (14914) → 惩击 (585)
+
+4.  快速治疗 vs 治疗祈祷: 根据法强和团队缺血量智能选择
+    4.0 织光者: 无buff时先FH获取buff
+    4.1 圣光涌动紧急消耗: 2层或即将过期
+    4.2 紧急单体: 最低血量比团队平均低30%以上
+    4.3 正常FH vs PoH比较 (法力效率/治疗量优先模式)
+    4.4 快速治疗: 默认单体治疗
+
+5.  DPS输出 (最低优先级)
+    5.1 暗言术：灭: 敌人 < 20%
+    5.2 圣言术：罚: 血量最低的敌人
+    5.3 神圣之火: 优先无debuff敌人 (炽热星火buff下瞬发)
+    5.4 神圣新星: 8码内 >= 2敌人
+    5.5 惩击: 填充 (需要站桩)
 
 特殊机制:
-- 快速治疗 vs 治疗祈祷: 根据法强计算实际有效治疗量，选择更高效的技能
-- 愈合祷言层数管理: 每次施放7层，上限14层，优先坦克
-- 圣言术：静充能管理: 奇迹工匠天赋下2层充能，神圣颂歌加速恢复
+- 快速治疗 vs 治疗祈祷: 根据法强计算实际有效治疗量, 选择更高效的技能
+- 愈合祷言层数管理: 优先坦克, 美德祈祷天赋下7层/上限14
+- 圣言术：静充能管理: 奇迹工匠天赋下2层充能, 神圣颂歌加速恢复
 - 终极宁静: 圣言术：静额外治疗4个队友 (原治疗量的15%)
+- 读条预测: 织光者层数 + 祝福消耗, 避免重复排队
+- 缺血数据共享: 面板显示和FH/PoH比较共用一次收集
 ]]
 
 --============================================================
@@ -107,7 +109,6 @@ local BUFF = {
     PrayerOfMending = 33076,        -- 愈合祷言
     AngelicFeather = 121557,        -- 天使羽毛
     SurgeOfLight = 114255,          -- 圣光涌动 (快速治疗变为瞬发, 省蓝)
-    EchoOfLight = 77489,            -- 回光 (HoT, 视为+5%血量)
     Lightweaver = 390993,           -- 织光者 (PoH治疗+18%, 读条-30%)
     Divinity = 1216314,             -- 神性 (PoH也变瞬发)
     Benediction = 1262766,          -- 祝福 (FH+30%, 溅射4人200%SP)
@@ -149,7 +150,7 @@ local TALENT = {
 天赋对三大核心治疗技能的影响:
 
 === 快速治疗 (Flash Heal, 2061) ===
-基础: 单体治疗, 系数 15.84, 有读条 (约1.25秒)
+基础: 单体治疗, 系数 16.36, 有读条 (约1.25秒)
 - 光之踪迹 (TrailOfLight):       FH 治疗量 +15%
 - 圣光涌动 (SurgeOfLight buff):  FH 变为瞬发 + 免费 (最多2层, 施放FH消耗1层)
 - 织光者 (Lightweaver talent):   施放FH后获得织光者buff → 增强下一次PoH
@@ -158,7 +159,7 @@ local TALENT = {
 - 祝福 (Benediction buff):       FH 治疗量 +30%, 额外智能溅射4名缺血队友各200%SP, 施放FH消耗
 
 === 治疗祈祷 (Prayer of Healing, 596) ===
-基础: 智能治疗最缺血的5人, 系数 7.89/人, 有读条 (约2秒)
+基础: 智能治疗最缺血的5人, 系数 8.16/人, 有读条 (约2秒)
 - 织光者buff (Lightweaver buff): PoH 治疗量 +18%, 读条 -30% (施放后消耗buff)
 - 虔诚连祷 (PrayerfulLitany):    PoH 主目标(最缺血的人) 治疗量 +125% (即 x2.25)
 - 灵魂之井 (Spiritwell):         PoH 也可消耗圣光涌动buff → PoH 变瞬发+免费
@@ -166,7 +167,7 @@ local TALENT = {
   → PoH 瞬发条件: (圣光涌动buff + 灵魂之井天赋) 或 神性buff
 
 === 圣言术：静 (Holy Word: Serenity, 2050) ===
-基础: 强力单体治疗, 系数 33.00, 瞬发, 60秒CD
+基础: 强力单体治疗, 系数 34.65, 瞬发, 60秒CD
 - 奇迹工匠 (MiracleWorker):      2层充能 (默认1层), 更积极使用, 防止充能溢出
 - 终极宁静 (UltimateSerenity):    额外溅射治疗4名队友, 每人主治疗量的15%
   → 溅射价值判断: 需要4+队友缺血量 >= serenityRaw*0.15 才值得考虑AoE收益
@@ -181,8 +182,6 @@ local TALENT = {
   有灵魂之井: FH和PoH都可消耗 → 走效率比较选更优的技能
   无灵魂之井: 只有FH能消耗 → 直接用FH
 
-回光 (EchoOfLight, mastery): 治疗后附加HoT
-  在FH vs PoH缺血量计算中, 有回光HoT的队友视为额外+5%有效血量, 减少过量治疗
 ]]
 
 --============================================================
@@ -212,6 +211,16 @@ local UnitIsUnit = NCF.UnitIsUnit
 local secretunwrap = NCF.secretunwrap
 
 local IsMidnight = true
+
+--============================================================
+-- 5.5 治疗系数常量
+--============================================================
+local COEFF = {
+    FlashHeal = 16.36,           -- 快速治疗
+    PrayerOfHealing = 8.16,      -- 治疗祈祷 (每人)
+    HolyWordSerenity = 34.65,    -- 圣言术：静
+    BenedictionSplash = 2.0,     -- 祝福溅射 (200% SP/人)
+}
 
 --============================================================
 -- 6. 辅助函数
@@ -258,38 +267,25 @@ end
 -- FH基础法力: 7875 | PoH基础法力: 13125
 -- 治疗专注天赋: FH-15% | 有效祈祷天赋: PoH-15% | 专注爆发天赋: PoH-10%读条-15%
 -- 圣光涌动: FH法力-50%; 灵魂之井: PoH也享受-50%
-local function ShouldCastPrayerOfHealing(members, sp, surgeActive, predictedLwStacks, fhBonusMult, benedictionActive)
+local function ShouldCastPrayerOfHealing(deficitData, sp, surgeActive, predictedLwStacks, fhBonusMult, benedictionActive, tc)
     local lightweaverActive = predictedLwStacks > 0
     local divinityActive = HasBuff(BUFF.Divinity, "player")
-    local hasPrayerfulLitany = HasTalent(TALENT.PrayerfulLitany)
-    local hasTrailOfLight = HasTalent(TALENT.TrailOfLight)
-    local hasSpiritwell = HasTalent(TALENT.Spiritwell)
-    local hasFocusedOutburst = HasTalent(TALENT.FocusedOutburst)
 
     -- PoH: 基础 * 织光者buff
     local pohMult = lightweaverActive and 1.18 or 1.0
-    local pohRaw = sp * 7.89 * pohMult
+    local pohRaw = sp * COEFF.PrayerOfHealing * pohMult
 
     -- FH: 基础 * 光之踪迹天赋 * 先知意志/祝福加成
-    local fhMult = hasTrailOfLight and 1.15 or 1.0
-    local fhRaw = sp * 15.84 * fhMult * (fhBonusMult or 1.0)
+    local fhMult = tc.trailOfLight and 1.15 or 1.0
+    local fhRaw = sp * COEFF.FlashHeal * fhMult * (fhBonusMult or 1.0)
 
-    -- 收集射程+LoS内队友的缺血量
-    -- 有回光(Echo of Light)HoT的队友视为额外+5%血量, 减少实际缺血量
+    -- 从预收集数据筛选PoH射程内队友, 应用回光调整
     local deficits = {}
-    for _, unit in ipairs(members) do
-        if IsSpellInRange(SPELL.PrayerOfHealing, unit) then
-            local deficit, maxHp = GetTrueDeficit(unit)
-            if HasBuff(BUFF.EchoOfLight, unit) then
-                deficit = deficit - maxHp * 0.05
-            end
-            if deficit > 0 then
-                table.insert(deficits, deficit)
-            end
+    for _, d in ipairs(deficitData) do
+        if d.inPohRange and d.deficit > 0 then
+            deficits[#deficits + 1] = d.deficit
         end
     end
-
-    -- 按缺血量从大到小排序 (PoH智能治疗最需要治疗的5人)
     table.sort(deficits, function(a, b) return a > b end)
 
     -- 治疗祈祷有效治疗 = 最多5人, 每人 min(pohRaw, 缺血量)
@@ -297,7 +293,7 @@ local function ShouldCastPrayerOfHealing(members, sp, surgeActive, predictedLwSt
     local pohEffective = 0
     for i = 1, math.min(5, #deficits) do
         local heal = pohRaw
-        if i == 1 and hasPrayerfulLitany then
+        if i == 1 and tc.prayerfulLitany then
             heal = heal * 2.25  -- +125% = x2.25
         end
         pohEffective = pohEffective + math.min(heal, deficits[i])
@@ -308,26 +304,26 @@ local function ShouldCastPrayerOfHealing(members, sp, surgeActive, predictedLwSt
 
     -- 祝福溅射: FH额外智能治疗4名缺血队友, 每人200%SP
     if benedictionActive then
-        local fhSplash = sp * 2.0
+        local fhSplash = sp * COEFF.BenedictionSplash
         for i = 2, math.min(5, #deficits) do
             fhEffective = fhEffective + math.min(fhSplash, deficits[i])
         end
     end
 
-    local pohInstant = (surgeActive and hasSpiritwell) or divinityActive
+    local pohInstant = (surgeActive and tc.spiritwell) or divinityActive
     local fhInstant = surgeActive
 
     local usePoh
     if NCF.holyPriestHealMode == "mana" then
         -- 法力效率模式: pohEff/pohMana > fhEff/fhMana ⟺ pohEff*fhMana > fhEff*pohMana
         local fhManaCost = 7875
-        if HasTalent(TALENT.HealingFocus) then fhManaCost = fhManaCost * 0.85 end
+        if tc.healingFocus then fhManaCost = fhManaCost * 0.85 end
         if fhInstant then fhManaCost = fhManaCost * 0.50 end  -- 圣光涌动-50%
 
         local pohManaCost = 13125
-        if HasTalent(TALENT.EfficientPrayers) then pohManaCost = pohManaCost * 0.85 end
-        if hasFocusedOutburst then pohManaCost = pohManaCost * 0.90 end
-        if surgeActive and hasSpiritwell then pohManaCost = pohManaCost * 0.50 end  -- 灵魂之井-50%
+        if tc.efficientPrayers then pohManaCost = pohManaCost * 0.85 end
+        if tc.focusedOutburst then pohManaCost = pohManaCost * 0.90 end
+        if surgeActive and tc.spiritwell then pohManaCost = pohManaCost * 0.50 end  -- 灵魂之井-50%
 
         if pohManaCost <= 0 then
             usePoh = true
@@ -339,7 +335,7 @@ local function ShouldCastPrayerOfHealing(members, sp, surgeActive, predictedLwSt
     else
         -- 治疗量优先模式: 按施法时间加权比较
         -- 专注爆发天赋: PoH读条-15%, 降低PoH时间权重
-        local foMult = hasFocusedOutburst and 0.85 or 1.0
+        local foMult = tc.focusedOutburst and 0.85 or 1.0
         local fhTimeWeight
         if fhInstant and pohInstant then
             fhTimeWeight = 1.0
@@ -963,6 +959,9 @@ end
 --============================================================
 local function CreateHolyRotation()
 
+    -- 天赋缓存 (每tick刷新, 避免重复查询, 复用table避免GC)
+    local tc = {}
+
     -- 移动追踪 (持久状态)
     local moveStartTime = 0
     local lastX, lastY, lastZ = 0, 0, 0
@@ -999,6 +998,24 @@ local function CreateHolyRotation()
             return GetSpellCooldownRemain(spellID) <= gcd
         end
 
+        -- 天赋缓存 (每tick刷新)
+        tc.lightweaver = HasTalent(TALENT.Lightweaver)
+        tc.prophetWill = HasTalent(TALENT.ProphetWill)
+        tc.guardianSpirit = HasTalent(TALENT.GuardianSpirit)
+        tc.miracleWorker = HasTalent(TALENT.MiracleWorker)
+        tc.ultimateSerenity = HasTalent(TALENT.UltimateSerenity)
+        tc.twistOfFate = HasTalent(TALENT.TwistOfFate)
+        tc.shadowWordDeath = HasTalent(TALENT.ShadowWordDeath)
+        tc.holyWordChastise = HasTalent(TALENT.HolyWordChastise)
+        tc.holyFire = HasTalent(TALENT.HolyFire)
+        tc.spiritwell = HasTalent(TALENT.Spiritwell)
+        tc.prayerOfHealing = HasTalent(TALENT.PrayerOfHealing)
+        tc.prayerfulLitany = HasTalent(TALENT.PrayerfulLitany)
+        tc.trailOfLight = HasTalent(TALENT.TrailOfLight)
+        tc.focusedOutburst = HasTalent(TALENT.FocusedOutburst)
+        tc.healingFocus = HasTalent(TALENT.HealingFocus)
+        tc.efficientPrayers = HasTalent(TALENT.EfficientPrayers)
+
         -- 常用状态缓存
         local members = NCF.GetGroupMembers()
         local avgHp = GetGroupAverageHealthPct(40)
@@ -1006,7 +1023,7 @@ local function CreateHolyRotation()
         local myHp = GetUnitHealthPct("player")
         local tankUnit = GetTankUnit()
         local sp = GetSpellPower()
-        local serenityRaw = sp * 33.00          -- 圣言术：静基础治疗量
+        local serenityRaw = sp * COEFF.HolyWordSerenity  -- 圣言术：静基础治疗量
 
         -- 圣光涌动: 快速治疗变为瞬发, 省蓝 (灵魂之井天赋下PoH也可消耗)
         local surgeStacks = GetBuffStacks(BUFF.SurgeOfLight, "player")
@@ -1019,42 +1036,41 @@ local function CreateHolyRotation()
         -- 读条预测: 织光者层数 + 祝福消耗
         local lightweaverStacks = GetBuffStacks(BUFF.Lightweaver, "player")
         local predictedLwStacks = lightweaverStacks
-        local hasLightweaverTalent = HasTalent(TALENT.Lightweaver)
-        if hasLightweaverTalent or benedictionActive then
+        if tc.lightweaver or benedictionActive then
             local castingSpellID = select(9, UnitCastingInfo("player"))
             if IsMidnight and castingSpellID then castingSpellID = secretunwrap(castingSpellID) end
             castingSpellID = castingSpellID and tonumber(castingSpellID)
             if castingSpellID == SPELL.FlashHeal then
-                if hasLightweaverTalent then
+                if tc.lightweaver then
                     predictedLwStacks = math.min(lightweaverStacks + 1, 4)
                 end
                 benedictionActive = false  -- FH消耗祝福buff
-            elseif castingSpellID == SPELL.PrayerOfHealing and hasLightweaverTalent then
+            elseif castingSpellID == SPELL.PrayerOfHealing and tc.lightweaver then
                 predictedLwStacks = math.max(lightweaverStacks - 1, 0)
             end
         end
 
         -- FH加成: 先知意志(对自身+30%) + 祝福buff(+30%), 在读条预测之后计算
-        local hasProphetWill = HasTalent(TALENT.ProphetWill)
-        local prophetWillMult = (hasProphetWill and lowestUnit and UnitIsUnit(lowestUnit, "player")) and 1.30 or 1.0
+        local prophetWillMult = (tc.prophetWill and lowestUnit and UnitIsUnit(lowestUnit, "player")) and 1.30 or 1.0
         local benedictionMult = benedictionActive and 1.30 or 1.0
         local fhBonusMult = prophetWillMult * benedictionMult
-        local fhRaw = sp * 15.84 * fhBonusMult  -- 快速治疗基础治疗量 (含加成)
+        local fhRaw = sp * COEFF.FlashHeal * fhBonusMult  -- 快速治疗基础治疗量 (含加成)
 
-        -- 缺血面板数据: 收集前5名缺血最多的队友
-        do
-            local ddata = {}
-            for _, unit in ipairs(members) do
-                local deficit = GetTrueDeficit(unit)
-                if deficit > 0 then
-                    local name = UnitName(unit) or unit
-                    local hp = GetUnitHealthPct(unit)
-                    ddata[#ddata + 1] = { name = name, deficit = deficit, hp = hp }
-                end
+        -- 缺血数据: 收集一次, 供面板显示和FH/PoH比较共用
+        local deficitData = {}
+        for _, unit in ipairs(members) do
+            local deficit, maxHp = GetTrueDeficit(unit)
+            if deficit > 0 then
+                deficitData[#deficitData + 1] = {
+                    name = UnitName(unit) or unit,
+                    deficit = deficit,
+                    hp = GetUnitHealthPct(unit),
+                    inPohRange = IsSpellInRange(SPELL.PrayerOfHealing, unit),
+                }
             end
-            table.sort(ddata, function(a, b) return a.deficit > b.deficit end)
-            NCF.holyDeficitData = ddata
         end
+        table.sort(deficitData, function(a, b) return a.deficit > b.deficit end)
+        NCF.holyDeficitData = deficitData
 
         --========================================
         -- 0. 战前增益: 真言术：韧
@@ -1139,7 +1155,7 @@ local function CreateHolyRotation()
         -- 2.5 守护之魂 (Guardian Spirit)
         -- 队友血量 < 20% 时使用
         --========================================
-        if HasTalent(TALENT.GuardianSpirit) and IsReady(SPELL.GuardianSpirit) and not ShouldSkipSpell(SPELL.GuardianSpirit) then
+        if tc.guardianSpirit and IsReady(SPELL.GuardianSpirit) and not ShouldSkipSpell(SPELL.GuardianSpirit) then
             for _, unit in ipairs(members) do
                 if GetUnitHealthPct(unit) < 20 and IsSpellInRange(SPELL.GuardianSpirit, unit) then
                     return "spell", SPELL.GuardianSpirit, unit
@@ -1160,12 +1176,10 @@ local function CreateHolyRotation()
                 lowestDeficit = GetTrueDeficit(lowestUnit)
             end
 
-            local hasMiracleWorker = HasTalent(TALENT.MiracleWorker)
             local hasApotheosis = HasBuff(BUFF.Apotheosis, "player")
-            local hasUltimateSerenity = HasTalent(TALENT.UltimateSerenity)
             local shouldCast = false
 
-            if hasMiracleWorker then
+            if tc.miracleWorker then
                 -- 奇迹工匠: 2层充能
                 local charges = GetSpellCharges(SPELL.HolyWordSerenity)
 
@@ -1179,7 +1193,7 @@ local function CreateHolyRotation()
                 elseif lowestDeficit > fhRaw * 2 then
                     shouldCast = true
                 -- 3.4 终极宁静: 主目标缺血量够大 + 4+队友需要溅射 → AoE价值高
-                elseif hasUltimateSerenity and lowestDeficit > fhRaw * 1.5 and CountDeficitMembers(members, ultimateSerenityPerTarget, SPELL.HolyWordSerenity) >= 4 then
+                elseif tc.ultimateSerenity and lowestDeficit > fhRaw * 1.5 and CountDeficitMembers(members, ultimateSerenityPerTarget, SPELL.HolyWordSerenity) >= 4 then
                     shouldCast = true
                 -- 3.5 有人 < 50% → 紧急治疗
                 elseif lowestHp < 50 then
@@ -1195,7 +1209,7 @@ local function CreateHolyRotation()
                 if lowestDeficit > fhRaw * 1.75 then
                     shouldCast = true
                 -- 3.8 终极宁静: 主目标缺血量够大 + 4+队友需要溅射
-                elseif hasUltimateSerenity and lowestDeficit > fhRaw * 1.5 and CountDeficitMembers(members, ultimateSerenityPerTarget, SPELL.HolyWordSerenity) >= 4 then
+                elseif tc.ultimateSerenity and lowestDeficit > fhRaw * 1.5 and CountDeficitMembers(members, ultimateSerenityPerTarget, SPELL.HolyWordSerenity) >= 4 then
                     shouldCast = true
                 -- 3.9 有人 < 50%
                 elseif lowestHp < 50 then
@@ -1212,23 +1226,23 @@ local function CreateHolyRotation()
         -- 3.5 命运扭转 (Twist of Fate) 维持
         -- 有天赋且无buff时, 攻击 <35% 血量的敌人来触发
         --========================================
-        if HasTalent(TALENT.TwistOfFate) and not HasBuff(BUFF.TwistOfFate, "player") then
+        if tc.twistOfFate and not HasBuff(BUFF.TwistOfFate, "player") then
             local lowEnemy = FindLowHealthEnemy(35, 40)
             if lowEnemy then
                 -- 暗言术：灭 (瞬发)
-                if HasTalent(TALENT.ShadowWordDeath) and IsReady(SPELL.ShadowWordDeath) and not ShouldSkipSpell(SPELL.ShadowWordDeath) then
+                if tc.shadowWordDeath and IsReady(SPELL.ShadowWordDeath) and not ShouldSkipSpell(SPELL.ShadowWordDeath) then
                     return "InstantSpell", SPELL.ShadowWordDeath, lowEnemy
                 end
                 -- 圣言术：罚 (瞬发)
-                if HasTalent(TALENT.HolyWordChastise) and IsReady(SPELL.HolyWordChastise) and not ShouldSkipSpell(SPELL.HolyWordChastise) then
+                if tc.holyWordChastise and IsReady(SPELL.HolyWordChastise) and not ShouldSkipSpell(SPELL.HolyWordChastise) then
                     return "InstantSpell", SPELL.HolyWordChastise, lowEnemy
                 end
                 -- 神圣之火 (炽热星火buff下瞬发)
-                if HasBuff(BUFF.EmpyrealBlaze, "player") and HasTalent(TALENT.HolyFire) and IsReady(SPELL.HolyFire) and not ShouldSkipSpell(SPELL.HolyFire) then
+                if HasBuff(BUFF.EmpyrealBlaze, "player") and tc.holyFire and IsReady(SPELL.HolyFire) and not ShouldSkipSpell(SPELL.HolyFire) then
                     return "InstantSpell", SPELL.HolyFire, lowEnemy
                 end
                 -- 神圣之火 (需要站桩)
-                if not isMoving and HasTalent(TALENT.HolyFire) and IsReady(SPELL.HolyFire) and not ShouldSkipSpell(SPELL.HolyFire) then
+                if not isMoving and tc.holyFire and IsReady(SPELL.HolyFire) and not ShouldSkipSpell(SPELL.HolyFire) then
                     return "spell", SPELL.HolyFire, lowEnemy
                 end
                 -- 惩击 (需要站桩, fallback)
@@ -1248,20 +1262,19 @@ local function CreateHolyRotation()
 
         -- 4.0 织光者: 无buff时先FH获取buff, 为下次PoH增强做准备
         -- 移动中跳过 (FH有读条), 除非圣光涌动使其瞬发
-        if hasLightweaverTalent and predictedLwStacks == 0
+        if tc.lightweaver and predictedLwStacks == 0
             and (not isMoving or surgeActive) then
             if lowestUnit and IsReady(SPELL.FlashHeal) and not ShouldSkipSpell(SPELL.FlashHeal) then
                 return "spell", SPELL.FlashHeal, lowestUnit
             end
         end
 
-        local hasSpiritwell = HasTalent(TALENT.Spiritwell)
         local surgeUrgent = surgeStacks >= 2 or (surgeActive and surgeRemain < NCF.gcd_max * 3)
 
         if surgeUrgent and lowestUnit then
-            if hasSpiritwell and HasTalent(TALENT.PrayerOfHealing) and IsReady(SPELL.PrayerOfHealing) and not ShouldSkipSpell(SPELL.PrayerOfHealing) then
+            if tc.spiritwell and tc.prayerOfHealing and IsReady(SPELL.PrayerOfHealing) and not ShouldSkipSpell(SPELL.PrayerOfHealing) then
                 -- 灵魂之井: PoH也能消耗圣光涌动, 走正常比较选更优
-                if ShouldCastPrayerOfHealing(members, sp, surgeActive, predictedLwStacks, fhBonusMult, benedictionActive) then
+                if ShouldCastPrayerOfHealing(deficitData, sp, surgeActive, predictedLwStacks, fhBonusMult, benedictionActive, tc) then
                     return "spell", SPELL.PrayerOfHealing, lowestUnit
                 end
             end
@@ -1277,8 +1290,8 @@ local function CreateHolyRotation()
         end
 
         -- 非紧急: 正常FH vs PoH比较
-        if lowestUnit and HasTalent(TALENT.PrayerOfHealing) and IsReady(SPELL.PrayerOfHealing) and not ShouldSkipSpell(SPELL.PrayerOfHealing) then
-            if ShouldCastPrayerOfHealing(members, sp, surgeActive, predictedLwStacks, fhBonusMult, benedictionActive) then
+        if lowestUnit and tc.prayerOfHealing and IsReady(SPELL.PrayerOfHealing) and not ShouldSkipSpell(SPELL.PrayerOfHealing) then
+            if ShouldCastPrayerOfHealing(deficitData, sp, surgeActive, predictedLwStacks, fhBonusMult, benedictionActive, tc) then
                 return "spell", SPELL.PrayerOfHealing, lowestUnit
             end
         end
@@ -1293,7 +1306,7 @@ local function CreateHolyRotation()
         --========================================
 
         -- 5.1 暗言术：灭: 任何敌人血量 < 20% (瞬发, 不需要面朝)
-        if HasTalent(TALENT.ShadowWordDeath) and IsReady(SPELL.ShadowWordDeath) and not ShouldSkipSpell(SPELL.ShadowWordDeath) then
+        if tc.shadowWordDeath and IsReady(SPELL.ShadowWordDeath) and not ShouldSkipSpell(SPELL.ShadowWordDeath) then
             local executeTarget = FindLowHealthEnemy(20, 40)
             if executeTarget then
                 return "InstantSpell", SPELL.ShadowWordDeath, executeTarget
@@ -1301,7 +1314,7 @@ local function CreateHolyRotation()
         end
 
         -- 5.2 圣言术：罚: 对血量最低的敌人 (瞬发, 不需要面朝)
-        if HasTalent(TALENT.HolyWordChastise) and IsReady(SPELL.HolyWordChastise) and not ShouldSkipSpell(SPELL.HolyWordChastise) then
+        if tc.holyWordChastise and IsReady(SPELL.HolyWordChastise) and not ShouldSkipSpell(SPELL.HolyWordChastise) then
             local chastiseTarget = FindLowestHealthEnemy(30)
             if chastiseTarget then
                 return "InstantSpell", SPELL.HolyWordChastise, chastiseTarget
@@ -1309,7 +1322,7 @@ local function CreateHolyRotation()
         end
 
         -- 5.3 神圣之火: 优先无debuff的敌人, 其次血量最低 (炽热星火buff下瞬发, 否则需要站桩)
-        if HasTalent(TALENT.HolyFire) and IsReady(SPELL.HolyFire) and not ShouldSkipSpell(SPELL.HolyFire) then
+        if tc.holyFire and IsReady(SPELL.HolyFire) and not ShouldSkipSpell(SPELL.HolyFire) then
             if HasBuff(BUFF.EmpyrealBlaze, "player") then
                 local fireTarget = GetEnemyWithoutDebuff(DEBUFF.HolyFire, 40, false, SPELL.HolyFire) or FindLowestHealthEnemy(40)
                 if fireTarget then
